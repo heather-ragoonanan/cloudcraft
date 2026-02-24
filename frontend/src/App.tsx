@@ -1,14 +1,31 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useState, useEffect } from 'react';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Questions from './pages/Questions';
 import Signup from './pages/Signup';
 import ChangePassword from './pages/ChangePassword';
+import Admin from './pages/Admin';
 import './App.css';
 
 function NavBar() {
   const { user, logout } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const groups = session.tokens?.accessToken?.payload['cognito:groups'] as string[] || [];
+        setIsAdmin(groups.includes('Admin'));
+      } catch {
+        // User not authenticated or session unavailable
+      }
+    };
+    if (user) checkAdmin();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -28,6 +45,11 @@ function NavBar() {
           <Link to="/questions" className="nav-link">
             Questions
           </Link>
+          {user && isAdmin && (
+            <Link to="/admin" className="nav-link admin-link">
+              🛠️ Admin
+            </Link>
+          )}
           {user ? (
             <>
               <span className="user-email">
@@ -61,6 +83,7 @@ function AppContent() {
             <Route path="/questions" element={<Questions />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/admin" element={<Admin />} />
           </Routes>
         </main>
 
