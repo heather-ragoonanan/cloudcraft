@@ -1,0 +1,13 @@
+{
+  "name": "EPAMainProject",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "infrastructure"
+  ],
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"no test yet\""
+  }
+}
