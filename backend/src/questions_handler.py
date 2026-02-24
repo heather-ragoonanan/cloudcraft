@@ -313,7 +313,12 @@ def handler(event, context):
                     }
 
                 # Build update expression
-                update_fields = ["question_text", "category", "difficulty", "reference_answer"]
+                update_fields = [
+                    "question_text",
+                    "category",
+                    "difficulty",
+                    "reference_answer",
+                ]
                 update_expr = "SET " + ", ".join(
                     [f"#{f} = :{f}" for f in update_fields if f in body]
                 )
