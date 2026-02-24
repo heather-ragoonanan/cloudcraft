@@ -94,7 +94,7 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
-          VITE_API_URL: 
+          VITE_API_URL: https://oe2wh61b5l.execute-api.eu-west-1.amazonaws.com/prod/
           VITE_USER_POOL_ID: ${{ steps.alpha-outputs.outputs.user_pool_id }}
           VITE_USER_POOL_CLIENT_ID: ${{ steps.alpha-outputs.outputs.user_pool_client_id }}
         run: npm run build
@@ -184,7 +184,7 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         env:
-          VITE_API_URL: 
+          VITE_API_URL: https://qr5wjwas5f.execute-api.eu-west-1.amazonaws.com/prod/
           VITE_USER_POOL_ID: ${{ steps.prod-outputs.outputs.user_pool_id }}
           VITE_USER_POOL_CLIENT_ID: ${{ steps.prod-outputs.outputs.user_pool_client_id }}
         run: npm run build
