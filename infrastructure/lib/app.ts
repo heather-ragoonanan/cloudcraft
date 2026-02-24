@@ -8,9 +8,6 @@ const app = new cdk.App();
 // Defaults to 'prod' for safety if not specified
 const environment = (process.env.ENVIRONMENT || 'prod') as 'alpha' | 'prod';
 
-// Get domain name from context
-const domainName = app.node.tryGetContext('domainName');
-
 // Get account and region from context (cdk.json)
 const accounts = app.node.tryGetContext('accounts');
 const regions = app.node.tryGetContext('regions');
@@ -40,5 +37,4 @@ const serviceStack = new stacks.ServiceStack(app, 'ServiceStack', {
   enableMonitoring: true,
   notificationEmail: notificationEmail,
   environment: environment,
-  domainName: domainName,
 });
