@@ -17,11 +17,13 @@ A full-stack interview preparation platform with AI-powered feedback, built with
 
 - 🔐 **Secure Authentication** - AWS Cognito user management
 - 📚 **Question Bank** - Searchable interview questions by category and difficulty
+- 👨‍💼 **Admin Dashboard** - Role-based access control with Cognito groups for question management
 - 🤖 **AI Interview Coach (Marcus)** - AWS Bedrock (Claude 3.7 Sonnet) powered answer evaluation
 - 🎯 **Practice Mode** - Submit answers and receive instant AI feedback with scores (0-100)
 - 💪 **Personalized Feedback** - Strengths, improvements, and actionable suggestions
 - 🌐 **Multi-Environment** - Separate Alpha and Production deployments
 - 📱 **Responsive Design** - Works on desktop, tablet, and mobile
+- 🔄 **Automated Security Updates** - Dependabot monitors dependencies weekly
 
 ## 🏗️ Architecture
 
@@ -31,6 +33,7 @@ A full-stack interview preparation platform with AI-powered feedback, built with
 - **Database**: DynamoDB
 - **AI**: AWS Bedrock (Claude 3.7 Sonnet)
 - **Authentication**: AWS Cognito
+- **Authorization**: Cognito Groups (Admin role-based access)
 - **Hosting**: S3 + CloudFront CDN
 - **Monitoring**: CloudWatch + CloudTrail
 
@@ -58,9 +61,11 @@ CloudCraft/
 ├── backend/            # Python Lambda functions
 │   ├── src/           # Lambda handlers
 │   │   ├── questions_handler.py   # CRUD operations
+│   │   │   └── POST/PUT/DELETE (Admin only)
 │   │   ├── evaluate_answer.py     # AI evaluation (Marcus)
 │   │   └── admin_create_user.py   # Admin management
 │   └── tests/         # Unit tests
+│       └── test_admin_authorization.py  # Admin access tests
 ├── infrastructure/     # AWS CDK stacks
 │   └── lib/           # CDK stack definitions
 ├── docs/              # Documentation
@@ -69,6 +74,19 @@ CloudCraft/
 │   └── THREAT_MODEL.md    # Security threat model
 └── .github/workflows/ # GitHub Actions
 ```
+
+### Admin Features
+
+Users in the **Admin** Cognito group can access `/admin` to:
+- ✏️ Create new interview questions
+- 📝 Edit existing questions
+- 🗑️ Delete questions
+
+Admin endpoints (require `cognito:groups` claim containing "Admin"):
+- `POST /questions` - Create question
+- `PUT /questions/{id}` - Update question
+- `DELETE /questions/{id}` - Delete question
+- `GET /questions` - Available to all authenticated users
 
 ## 💻 Local Development
 
@@ -146,12 +164,15 @@ aws s3 sync dist/ s3://<bucket-name>
 ## 🔐 Security
 
 - **Trivy vulnerability scanning** on every build
+- **Dependabot security updates** check dependencies weekly
 - **Manual approval gates** for production deployments
 - **Separate environments** with isolated AWS resources
 - **AWS IAM roles** with least privilege principle
+- **Role-based access control** via Cognito groups for admin operations
 - **Integration tests** validate alpha before production
 - **HTTPS enforced** for all traffic
 - **JWT token validation** on every API request
+- **Group-based authorization** for destructive operations (POST/PUT/DELETE)
 - **CloudTrail logging** for audit trail
 
 ## 📝 License
@@ -160,6 +181,6 @@ Private project - All rights reserved
 
 ---
 
-**Last Updated:** 2026-02-20
-**Version:** 2.0
+**Last Updated:** 2026-02-22
+**Version:** 2.1
 **Author:** Antho103
