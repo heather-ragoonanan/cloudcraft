@@ -26,6 +26,8 @@ export class ServiceStack extends cdk.Stack {
     
     const enableMonitoring = props?.enableMonitoring ?? true;
     const environment = props?.environment ?? 'prod';
+    const isProduction = environment === 'prod';
+
 
     const userPool = new cognito.UserPool(this, 'InterviewQuestionBankUserPool', {
       userPoolName: 'interview-question-bank-users',
