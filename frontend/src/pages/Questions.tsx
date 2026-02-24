@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getAllQuestions } from '../services/api';
-import type { Question } from '../services/api';
+import { getAllQuestions, evaluateAnswer } from '../services/api';
+import type { Question, EvaluationResponse } from '../services/api';
 import './Questions.css';
 
 export default function Questions() {
@@ -12,6 +12,12 @@ export default function Questions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, getAuthToken } = useAuth();
+
+  // Answer modal state
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [evaluating, setEvaluating] = useState(false);
+  const [evaluation, setEvaluation] = useState<EvaluationResponse | null>(null);
 
   const loadQuestions = async () => {
     if (!user) {
@@ -44,16 +50,20 @@ export default function Questions() {
     return ['All', ...Array.from(cats)];
   }, [questions]);
 
-  const difficulties = ['All', 'Easy', 'Medium', 'Hard'];
+  const difficulties = useMemo(() => {
+    const diffs = new Set(questions.map(q => q.difficulty.toLowerCase()));
+    return ['All', ...Array.from(diffs)];
+  }, [questions]);
 
   const filteredQuestions = useMemo(() => {
     return questions.filter(question => {
-      const matchesSearch = question.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           question.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           question.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesSearch = question.question_text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           question.competency.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           question.category.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory = selectedCategory === 'All' || question.category === selectedCategory;
-      const matchesDifficulty = selectedDifficulty === 'All' || question.difficulty === selectedDifficulty;
+      const matchesDifficulty = selectedDifficulty === 'All' ||
+                                question.difficulty.toLowerCase() === selectedDifficulty.toLowerCase();
 
       return matchesSearch && matchesCategory && matchesDifficulty;
     });
@@ -63,13 +73,58 @@ export default function Questions() {
     return `difficulty difficulty-${difficulty.toLowerCase()}`;
   };
 
+  const capitalizeCategory = (category: string) => {
+    return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  };
+
+  const capitalizeDifficulty = (difficulty: string) => {
+    return difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+  };
+
+  const handlePracticeAnswer = (question: Question) => {
+    setSelectedQuestion(question);
+    setUserAnswer('');
+    setEvaluation(null);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedQuestion(null);
+    setUserAnswer('');
+    setEvaluation(null);
+  };
+
+  const handleSubmitAnswer = async () => {
+    if (!selectedQuestion || !userAnswer.trim()) {
+      return;
+    }
+
+    try {
+      setEvaluating(true);
+      const token = await getAuthToken();
+      const result = await evaluateAnswer(
+        {
+          question: selectedQuestion.question_text,
+          answer: userAnswer,
+          competency_type: selectedQuestion.competency,
+        },
+        token
+      );
+      setEvaluation(result);
+    } catch (err) {
+      console.error('Error evaluating answer:', err);
+      alert(err instanceof Error ? err.message : 'Failed to evaluate answer');
+    } finally {
+      setEvaluating(false);
+    }
+  };
+
   return (
     <div className="questions-container">
       <header className="questions-header">
         <h1>Question Bank</h1>
         <p>
           {user
-            ? 'Browse and search technical interview questions'
+            ? 'Browse and practice technical interview questions with AI feedback'
             : '⚠️ Please login to access the question bank'}
         </p>
         {user && <span className="auth-badge">✓ Authenticated</span>}
@@ -115,7 +170,7 @@ export default function Questions() {
                 disabled={loading}
               >
                 {difficulties.map(diff => (
-                  <option key={diff} value={diff}>{diff}</option>
+                  <option key={diff} value={diff}>{capitalizeDifficulty(diff)}</option>
                 ))}
               </select>
             </div>
@@ -156,19 +211,21 @@ export default function Questions() {
                   filteredQuestions.map(question => (
                     <div key={question.id} className="question-card">
                       <div className="question-header">
-                        <h3>{question.title}</h3>
+                        <h3>{question.question_text}</h3>
                         <span className={getDifficultyClass(question.difficulty)}>
-                          {question.difficulty}
+                          {capitalizeDifficulty(question.difficulty)}
                         </span>
                       </div>
-                      <p className="question-description">{question.description}</p>
                       <div className="question-footer">
                         <div className="question-tags">
-                          {question.tags.map(tag => (
-                            <span key={tag} className="tag">{tag}</span>
-                          ))}
+                          <span className="tag">{capitalizeCategory(question.category)}</span>
                         </div>
-                        <button className="btn btn-small">View Details</button>
+                        <button
+                          className="btn btn-small"
+                          onClick={() => handlePracticeAnswer(question)}
+                        >
+                          🎯 Practice Answer
+                        </button>
                       </div>
                     </div>
                   ))
@@ -181,6 +238,115 @@ export default function Questions() {
             </>
           )}
         </>
+      )}
+
+      {/* Answer Modal */}
+      {selectedQuestion && (
+        <div className="modal-overlay" onClick={handleCloseModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Practice Answer</h2>
+              <button className="modal-close" onClick={handleCloseModal}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="question-display">
+                <h3>{selectedQuestion.question_text}</h3>
+                <div className="question-meta">
+                  <span className={getDifficultyClass(selectedQuestion.difficulty)}>
+                    {capitalizeDifficulty(selectedQuestion.difficulty)}
+                  </span>
+                  <span className="category-badge">{capitalizeCategory(selectedQuestion.category)}</span>
+                </div>
+                {selectedQuestion.reference_answer && (
+                  <details className="reference-answer">
+                    <summary>📚 Reference Answer (click to reveal)</summary>
+                    <p>{selectedQuestion.reference_answer}</p>
+                  </details>
+                )}
+              </div>
+
+              <div className="answer-section">
+                <label htmlFor="user-answer">Your Answer:</label>
+                <textarea
+                  id="user-answer"
+                  value={userAnswer}
+                  onChange={(e) => setUserAnswer(e.target.value)}
+                  placeholder="Type your answer here..."
+                  rows={8}
+                  disabled={evaluating}
+                />
+              </div>
+
+              {!evaluation && (
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSubmitAnswer}
+                  disabled={evaluating || !userAnswer.trim()}
+                >
+                  {evaluating ? '🤖 Marcus is evaluating...' : '✨ Get AI Feedback'}
+                </button>
+              )}
+
+              {evaluation && (
+                <div className="evaluation-results">
+                  <div className="evaluation-header">
+                    <h3>Marcus's Feedback</h3>
+                    <div className="score-badge">
+                      Score: {evaluation.score}/100
+                    </div>
+                  </div>
+
+                  <div className={`correctness ${evaluation.is_correct ? 'correct' : 'incorrect'}`}>
+                    {evaluation.is_correct ? '✅ Correct approach!' : '⚠️ Needs improvement'}
+                  </div>
+
+                  <div className="feedback-section">
+                    <h4>💪 Strengths</h4>
+                    <ul>
+                      {evaluation.strengths.map((strength, idx) => (
+                        <li key={idx}>{strength}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="feedback-section">
+                    <h4>🎯 Areas for Improvement</h4>
+                    <ul>
+                      {evaluation.improvements.map((improvement, idx) => (
+                        <li key={idx}>{improvement}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="feedback-section">
+                    <h4>💡 Suggestions</h4>
+                    <ul>
+                      {evaluation.suggestions.map((suggestion, idx) => (
+                        <li key={idx}>{suggestion}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="marcus-comment">
+                    <h4>🤖 Marcus says:</h4>
+                    <p>{evaluation.marcus_comment}</p>
+                  </div>
+
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setUserAnswer('');
+                      setEvaluation(null);
+                    }}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
