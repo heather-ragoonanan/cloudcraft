@@ -15,7 +15,6 @@ function synthTemplate(environment: 'alpha' | 'prod' = 'prod') {
       region: 'eu-west-1'
     },
     environment: environment,
-    domainName: '',
   });
 
   return Template.fromStack(stack);
