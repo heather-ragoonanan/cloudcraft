@@ -8,7 +8,7 @@ on:
       - 'package-lock.json'
       - 'infrastructure/**'
       - 'backend/**'
-      - '.github/workflows/**'
+      - '.github/workflows/infa-and-backend.yml'
   pull_request:
     branches: [ main ]
     paths:

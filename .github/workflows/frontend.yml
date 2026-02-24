@@ -7,7 +7,7 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'frontend/**'
-      - '.github/workflows/**'
+      - '.github/workflows/frontend.yml'
 
 permissions:
   id-token: write
