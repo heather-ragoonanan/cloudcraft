@@ -17,6 +17,15 @@
     ]
   },
   "context": {
+    "notificationEmail": "heathrag@amazon.co.uk",
+    "accounts": {
+      "prod": "641579938957",
+      "alpha": "254527609508"
+    },
+    "regions": {
+      "prod": "eu-west-1",
+      "alpha": "eu-west-1"
+    },
     "@aws-cdk/aws-signer:signingProfileNamePassedToCfn": true,
     "@aws-cdk/aws-ecs-patterns:secGroupsDisablesImplicitOpenListener": true,
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,

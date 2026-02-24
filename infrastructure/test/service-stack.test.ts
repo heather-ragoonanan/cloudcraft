@@ -2,9 +2,22 @@ import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { ServiceStack } from '../lib/stacks/service';
 
-function synthTemplate() {
-  const app = new cdk.App();
-  const stack = new ServiceStack(app, 'TestServiceStack');
+function synthTemplate(environment: 'alpha' | 'prod' = 'prod') {
+  const app = new cdk.App({
+    context: {
+      // Mock hosted zone lookup to avoid AWS API calls during testing
+    },
+  });
+
+  const stack = new ServiceStack(app, 'TestServiceStack', {
+    env: {
+      account: '123456789012',
+      region: 'eu-west-1'
+    },
+    environment: environment,
+    domainName: '',
+  });
+
   return Template.fromStack(stack);
 }
 
@@ -207,5 +220,5 @@ describe('ServiceStack CDK tests', () => {
       // We verify it's not explicitly set to true
     });
   });
-});
 
+});
