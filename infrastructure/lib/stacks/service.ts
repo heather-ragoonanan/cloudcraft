@@ -41,8 +41,13 @@ export class ServiceStack extends cdk.Stack {
     if (isProduction) {
       websiteDomain = routeDomain;
 
-      hostedZone = route53.HostedZone.fromLookup(this, 'RootHostedZone', {
-        domainName: routeDomain,
+      const hostedZone = new route53.HostedZone(this, 'SupernovaZone', {
+        zoneName: 'heathrag.people.aws.dev',
+      });
+
+      new cdk.CfnOutput(this, 'HostedZoneId', {
+        value: hostedZone.hostedZoneId,
+        exportName: 'SupernovaHostedZoneId',
       });
 
       // Certificate for CloudFront (must be in us-east-1)
