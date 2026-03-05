@@ -31,7 +31,6 @@ export class ServiceStack extends cdk.Stack {
     const environment = props?.environment ?? 'prod';
     const isProduction = environment === 'prod';
     const routeDomain = 'heathrag.people.aws.dev';
-    const isProd = environment === 'prod';
 
     let websiteDomain: string;
     let hostedZone: route53.IHostedZone | undefined;
@@ -39,7 +38,7 @@ export class ServiceStack extends cdk.Stack {
     let apiDomain: string | undefined;
     let apiCertificate: acm.ICertificate | undefined;
 
-    if (isProd) {
+    if (isProduction) {
       websiteDomain = routeDomain;
 
       hostedZone = route53.HostedZone.fromLookup(this, 'RootHostedZone', {
@@ -60,7 +59,6 @@ export class ServiceStack extends cdk.Stack {
         validation: acm.CertificateValidation.fromDns(hostedZone),
       });
     }
-
 
     const userPool = new cognito.UserPool(this, 'InterviewQuestionBankUserPool', {
       userPoolName: 'interview-question-bank-users',
@@ -343,7 +341,7 @@ export class ServiceStack extends cdk.Stack {
     });
 
     // API Gateway Custom Domain (Production only)
-    if (isProd && apiDomain && apiCertificate && hostedZone) {
+    if (isProduction && apiDomain && apiCertificate && hostedZone) {
       const customDomain = new apigw.DomainName(this, 'ApiCustomDomain', {
         domainName: apiDomain,
         certificate: apiCertificate,
