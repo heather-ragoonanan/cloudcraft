@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import { ServiceStack } from '../lib/stacks/service';
 
-function synthTemplate(environment: 'alpha' | 'prod' = 'prod') {
+function synthTemplate(environment: 'alpha' | 'prod' = 'alpha') {
   const app = new cdk.App({
     context: {
       // Mock hosted zone lookup to avoid AWS API calls during testing

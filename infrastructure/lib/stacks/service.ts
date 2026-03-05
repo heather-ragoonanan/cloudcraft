@@ -13,6 +13,9 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import * as cloudwatch_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 
 export interface ServiceStackProps extends cdk.StackProps {
   enableMonitoring?: boolean;
@@ -27,6 +30,36 @@ export class ServiceStack extends cdk.Stack {
     const enableMonitoring = props?.enableMonitoring ?? true;
     const environment = props?.environment ?? 'prod';
     const isProduction = environment === 'prod';
+    const routeDomain = 'heathrag.people.aws.dev';
+    const isProd = environment === 'prod';
+
+    let websiteDomain: string;
+    let hostedZone: route53.IHostedZone | undefined;
+    let certificate: acm.ICertificate | undefined;
+    let apiDomain: string | undefined;
+    let apiCertificate: acm.ICertificate | undefined;
+
+    if (isProd) {
+      websiteDomain = routeDomain;
+
+      hostedZone = route53.HostedZone.fromLookup(this, 'RootHostedZone', {
+        domainName: routeDomain,
+      });
+
+      // Certificate for CloudFront (must be in us-east-1)
+      // Note: This requires manual creation in us-east-1 or use of a cross-region stack
+      certificate = acm.Certificate.fromCertificateArn(
+        this,
+        'WebsiteCertificate',
+        `arn:aws:acm:us-east-1:${this.account}:certificate/*`
+      );
+
+      apiDomain = `api.${routeDomain}`;
+      apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
+        domainName: apiDomain,
+        validation: acm.CertificateValidation.fromDns(hostedZone),
+      });
+    }
 
 
     const userPool = new cognito.UserPool(this, 'InterviewQuestionBankUserPool', {
@@ -308,6 +341,33 @@ export class ServiceStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'QuestionsEndpoint', {
       value: `${api.url}questions`,
     });
+
+    // API Gateway Custom Domain (Production only)
+    if (isProd && apiDomain && apiCertificate && hostedZone) {
+      const customDomain = new apigw.DomainName(this, 'ApiCustomDomain', {
+        domainName: apiDomain,
+        certificate: apiCertificate,
+        endpointType: apigw.EndpointType.REGIONAL,
+        securityPolicy: apigw.SecurityPolicy.TLS_1_2,
+      });
+
+      customDomain.addBasePathMapping(api, {
+        basePath: '',
+      });
+
+      new route53.ARecord(this, 'ApiAliasRecord', {
+        zone: hostedZone,
+        recordName: 'api',
+        target: route53.RecordTarget.fromAlias(
+          new route53Targets.ApiGatewayDomain(customDomain)
+        ),
+      });
+
+      new cdk.CfnOutput(this, 'ApiCustomDomainName', {
+        value: `https://${apiDomain}`,
+        description: 'Custom domain URL for the API',
+      });
+    }
 
     // ============================================
     // CloudWatch Monitoring (Optional)
