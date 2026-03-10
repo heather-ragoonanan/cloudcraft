@@ -16,6 +16,7 @@ import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import { DnsValidatedCertificate } from 'aws-cdk-lib/aws-certificatemanager';
 
 export interface ServiceStackProps extends cdk.StackProps {
   enableMonitoring?: boolean;
@@ -41,7 +42,7 @@ export class ServiceStack extends cdk.Stack {
     if (isProduction) {
       websiteDomain = routeDomain;
 
-      const hostedZone = new route53.HostedZone(this, 'SupernovaZone', {
+      hostedZone = new route53.HostedZone(this, 'SupernovaZone', {
         zoneName: 'heathrag.people.aws.dev',
       });
 
@@ -51,12 +52,11 @@ export class ServiceStack extends cdk.Stack {
       });
 
       // Certificate for CloudFront (must be in us-east-1)
-      // Note: This requires manual creation in us-east-1 or use of a cross-region stack
-      certificate = acm.Certificate.fromCertificateArn(
-        this,
-        'WebsiteCertificate',
-        `arn:aws:acm:us-east-1:${this.account}:certificate/*`
-      );
+      certificate = new DnsValidatedCertificate(this, 'WebsiteCertificate', {
+        domainName: websiteDomain,
+        hostedZone: hostedZone,
+        region: 'us-east-1',
+      });
 
       apiDomain = `api.${routeDomain}`;
       apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
