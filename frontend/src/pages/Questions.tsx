@@ -52,7 +52,9 @@ export default function Questions() {
 
   const difficulties = useMemo(() => {
     const diffs = new Set(questions.map(q => q.difficulty.toLowerCase()));
-    return ['All', ...Array.from(diffs)];
+    const order: Record<string, number> = { 'easy': 1, 'medium': 2, 'hard': 3 };
+    const sortedDiffs = Array.from(diffs).sort((a, b) => order[a] - order[b]);
+    return ['All', ...sortedDiffs];
   }, [questions]);
 
   const filteredQuestions = useMemo(() => {
