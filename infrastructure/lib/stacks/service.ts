@@ -63,34 +63,39 @@ export class ServiceStack extends cdk.Stack {
         description: 'Website URL',
       });
     } else {
-      // Alpha: only configure custom domain if prod hosted zone exists
-      try {
-        hostedZone = route53.HostedZone.fromLookup(this, 'SupernovaZone', {
-          domainName: baseDomain,
-        });
+      // Alpha: Create subdomain hosted zone (alpha.heathrag.people.aws.dev)
+      websiteDomain = `alpha.${baseDomain}`;
 
-        websiteDomain = `alpha.${baseDomain}`;
+      hostedZone = new route53.PublicHostedZone(this, 'AlphaHostedZone', {
+        zoneName: websiteDomain,
+        comment: 'Alpha environment subdomain zone',
+        caaAmazon: true,
+      });
 
-        certificate = new DnsValidatedCertificate(this, 'WebsiteCertificate', {
-          domainName: websiteDomain,
-          hostedZone: hostedZone,
-          region: 'us-east-1',
-        });
+      hostedZone.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
-        apiDomain = `api.alpha.${baseDomain}`;
-        apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
-          domainName: apiDomain,
-          validation: acm.CertificateValidation.fromDns(hostedZone),
-        });
+      // Output NS servers for manual delegation in prod account
+      new cdk.CfnOutput(this, 'AlphaNameServers', {
+        value: cdk.Fn.join(', ', hostedZone.hostedZoneNameServers || []),
+        description: `Add these NS records to ${baseDomain} in prod account for subdomain delegation`,
+      });
 
-        new cdk.CfnOutput(this, 'WebsiteDomain', {
-          value: `https://${websiteDomain}`,
-          description: 'Website URL',
-        });
-      } catch (error) {
-        // Hosted zone doesn't exist - skip custom domain setup
-        console.log('Hosted zone not found, skipping custom domain setup for alpha');
-      }
+      certificate = new DnsValidatedCertificate(this, 'WebsiteCertificate', {
+        domainName: websiteDomain,
+        hostedZone: hostedZone,
+        region: 'us-east-1',
+      });
+
+      apiDomain = `api.alpha.${baseDomain}`;
+      apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
+        domainName: apiDomain,
+        validation: acm.CertificateValidation.fromDns(hostedZone),
+      });
+
+      new cdk.CfnOutput(this, 'WebsiteDomain', {
+        value: `https://${websiteDomain}`,
+        description: 'Website URL',
+      });
     }
 
     const userPool = new cognito.UserPool(this, 'InterviewQuestionBankUserPool', {
