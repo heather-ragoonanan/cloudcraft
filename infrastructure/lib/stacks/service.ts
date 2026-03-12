@@ -31,38 +31,66 @@ export class ServiceStack extends cdk.Stack {
     const enableMonitoring = props?.enableMonitoring ?? true;
     const environment = props?.environment ?? 'prod';
     const isProduction = environment === 'prod';
-    const routeDomain = 'heathrag.people.aws.dev';
+    const baseDomain = 'heathrag.people.aws.dev';
 
-    let websiteDomain: string;
+    let websiteDomain: string = '';
     let hostedZone: route53.IHostedZone | undefined;
     let certificate: acm.ICertificate | undefined;
     let apiDomain: string | undefined;
     let apiCertificate: acm.ICertificate | undefined;
 
     if (isProduction) {
-      websiteDomain = routeDomain;
+      websiteDomain = baseDomain;
 
-      hostedZone = new route53.HostedZone(this, 'SupernovaZone', {
-        zoneName: 'heathrag.people.aws.dev',
+      hostedZone = route53.HostedZone.fromLookup(this, 'SupernovaZone', {
+        domainName: baseDomain,
       });
 
-      new cdk.CfnOutput(this, 'HostedZoneId', {
-        value: hostedZone.hostedZoneId,
-        exportName: 'SupernovaHostedZoneId',
-      });
-
-      // Certificate for CloudFront (must be in us-east-1)
       certificate = new DnsValidatedCertificate(this, 'WebsiteCertificate', {
         domainName: websiteDomain,
         hostedZone: hostedZone,
         region: 'us-east-1',
       });
 
-      apiDomain = `api.${routeDomain}`;
+      apiDomain = `api.${baseDomain}`;
       apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
         domainName: apiDomain,
         validation: acm.CertificateValidation.fromDns(hostedZone),
       });
+
+      new cdk.CfnOutput(this, 'WebsiteDomain', {
+        value: `https://${websiteDomain}`,
+        description: 'Website URL',
+      });
+    } else {
+      // Alpha: only configure custom domain if prod hosted zone exists
+      try {
+        hostedZone = route53.HostedZone.fromLookup(this, 'SupernovaZone', {
+          domainName: baseDomain,
+        });
+
+        websiteDomain = `alpha.${baseDomain}`;
+
+        certificate = new DnsValidatedCertificate(this, 'WebsiteCertificate', {
+          domainName: websiteDomain,
+          hostedZone: hostedZone,
+          region: 'us-east-1',
+        });
+
+        apiDomain = `api.alpha.${baseDomain}`;
+        apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
+          domainName: apiDomain,
+          validation: acm.CertificateValidation.fromDns(hostedZone),
+        });
+
+        new cdk.CfnOutput(this, 'WebsiteDomain', {
+          value: `https://${websiteDomain}`,
+          description: 'Website URL',
+        });
+      } catch (error) {
+        // Hosted zone doesn't exist - skip custom domain setup
+        console.log('Hosted zone not found, skipping custom domain setup for alpha');
+      }
     }
 
     const userPool = new cognito.UserPool(this, 'InterviewQuestionBankUserPool', {
@@ -138,7 +166,7 @@ export class ServiceStack extends cdk.Stack {
 
     frontendS3.grantRead(originAccessIdentity);
 
-    const distribution = new cloudfront.Distribution(this, 'FrontendDistribution', {
+    const distributionConfig: cloudfront.DistributionProps = {
       defaultBehavior: {
         origin: new origins.S3Origin(frontendS3, {
           originAccessIdentity: originAccessIdentity,
@@ -164,7 +192,13 @@ export class ServiceStack extends cdk.Stack {
         },
       ],
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
-    });
+      ...(certificate && websiteDomain ? {
+        certificate: certificate,
+        domainNames: [websiteDomain],
+      } : {}),
+    };
+
+    const distribution = new cloudfront.Distribution(this, 'FrontendDistribution', distributionConfig);
 
     new cdk.CfnOutput(this, 'FrontendBucketName', {
       value: frontendS3.bucketName,
