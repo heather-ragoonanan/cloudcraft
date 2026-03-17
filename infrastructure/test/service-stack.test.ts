@@ -25,8 +25,8 @@ describe('ServiceStack CDK tests', () => {
     const template = synthTemplate();
 
     template.resourceCountIs('AWS::DynamoDB::Table', 1);
-    // Expect 5: QuestionsHandler + EvaluateAnswerFn + AdminCreateUser + LogRetention + DnsValidatedCertificate custom resource Lambdas
-    template.resourceCountIs('AWS::Lambda::Function', 5);
+    // Expect 4: QuestionsHandler + EvaluateAnswerFn + AdminCreateUser + LogRetention Lambdas
+    template.resourceCountIs('AWS::Lambda::Function', 4);
     template.resourceCountIs('AWS::S3::Bucket', 2); // Frontend + CloudTrail
     template.resourceCountIs('AWS::CloudFront::Distribution', 1);
     template.resourceCountIs('AWS::Cognito::UserPool', 1);
