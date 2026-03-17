@@ -13,10 +13,7 @@ import * as sns from 'aws-cdk-lib/aws-sns';
 import * as cloudwatch_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudtrail from 'aws-cdk-lib/aws-cloudtrail';
-import * as route53 from 'aws-cdk-lib/aws-route53';
-import * as acm from 'aws-cdk-lib/aws-certificatemanager';
-import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
-import { DnsValidatedCertificate } from 'aws-cdk-lib/aws-certificatemanager';
+
 
 export interface ServiceStackProps extends cdk.StackProps {
   enableMonitoring?: boolean;
@@ -31,72 +28,6 @@ export class ServiceStack extends cdk.Stack {
     const enableMonitoring = props?.enableMonitoring ?? true;
     const environment = props?.environment ?? 'prod';
     const isProduction = environment === 'prod';
-    const baseDomain = 'heathrag.people.aws.dev';
-
-    let websiteDomain: string = '';
-    let hostedZone: route53.IHostedZone | undefined;
-    let certificate: acm.ICertificate | undefined;
-    let apiDomain: string | undefined;
-    let apiCertificate: acm.ICertificate | undefined;
-
-    if (isProduction) {
-      websiteDomain = baseDomain;
-
-      hostedZone = route53.HostedZone.fromLookup(this, 'SupernovaZone', {
-        domainName: baseDomain,
-      });
-
-      certificate = new DnsValidatedCertificate(this, 'WebsiteCertificate', {
-        domainName: websiteDomain,
-        hostedZone: hostedZone,
-        region: 'us-east-1',
-      });
-
-      apiDomain = `api.${baseDomain}`;
-      apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
-        domainName: apiDomain,
-        validation: acm.CertificateValidation.fromDns(hostedZone),
-      });
-
-      new cdk.CfnOutput(this, 'WebsiteDomain', {
-        value: `https://${websiteDomain}`,
-        description: 'Website URL',
-      });
-    } else {
-      // Alpha: Create subdomain hosted zone (alpha.heathrag.people.aws.dev)
-      websiteDomain = `alpha.${baseDomain}`;
-
-      hostedZone = new route53.PublicHostedZone(this, 'AlphaHostedZone', {
-        zoneName: websiteDomain,
-        comment: 'Alpha environment subdomain zone',
-        caaAmazon: true,
-      });
-
-      hostedZone.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
-
-      // Output NS servers for manual delegation in prod account
-      new cdk.CfnOutput(this, 'AlphaNameServers', {
-        value: cdk.Fn.join(', ', hostedZone.hostedZoneNameServers || []),
-        description: `Add these NS records to ${baseDomain} in prod account for subdomain delegation`,
-      });
-
-      certificate = new DnsValidatedCertificate(this, 'WebsiteCertificate', {
-        domainName: websiteDomain,
-        hostedZone: hostedZone,
-        region: 'us-east-1',
-      });
-
-      apiDomain = `api.alpha.${baseDomain}`;
-      apiCertificate = new acm.Certificate(this, 'ApiCertificate', {
-        domainName: apiDomain,
-        validation: acm.CertificateValidation.fromDns(hostedZone),
-      });
-
-      new cdk.CfnOutput(this, 'WebsiteDomain', {
-        value: `https://${websiteDomain}`,
-        description: 'Website URL',
-      });
-    }
 
     const userPool = new cognito.UserPool(this, 'InterviewQuestionBankUserPool', {
       userPoolName: 'interview-question-bank-users',
@@ -197,10 +128,6 @@ export class ServiceStack extends cdk.Stack {
         },
       ],
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
-      ...(certificate && websiteDomain ? {
-        certificate: certificate,
-        domainNames: [websiteDomain],
-      } : {}),
     };
 
     const distribution = new cloudfront.Distribution(this, 'FrontendDistribution', distributionConfig);
@@ -383,33 +310,6 @@ export class ServiceStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'QuestionsEndpoint', {
       value: `${api.url}questions`,
     });
-
-    // API Gateway Custom Domain (Production only)
-    if (isProduction && apiDomain && apiCertificate && hostedZone) {
-      const customDomain = new apigw.DomainName(this, 'ApiCustomDomain', {
-        domainName: apiDomain,
-        certificate: apiCertificate,
-        endpointType: apigw.EndpointType.REGIONAL,
-        securityPolicy: apigw.SecurityPolicy.TLS_1_2,
-      });
-
-      customDomain.addBasePathMapping(api, {
-        basePath: '',
-      });
-
-      new route53.ARecord(this, 'ApiAliasRecord', {
-        zone: hostedZone,
-        recordName: 'api',
-        target: route53.RecordTarget.fromAlias(
-          new route53Targets.ApiGatewayDomain(customDomain)
-        ),
-      });
-
-      new cdk.CfnOutput(this, 'ApiCustomDomainName', {
-        value: `https://${apiDomain}`,
-        description: 'Custom domain URL for the API',
-      });
-    }
 
     // ============================================
     // CloudWatch Monitoring (Optional)
