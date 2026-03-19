@@ -51,7 +51,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* light yellow alternative: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%) */
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  /* light yellow alternative: */
+  background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%);
   background-attachment: fixed;
   color: var(--text-dark);
 }
