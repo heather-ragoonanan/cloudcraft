@@ -4,16 +4,14 @@
 ---
 
 ## Table of Contents
-1. [End Users](#end-users)
-2. [Developers](#developers)
-3. [Admin Users](#admin-users)
-4. [Platform Administrators](#platform-administrators)
+1. [Must Have](#must-have)
+2. [Nice to Have](#nice-to-have)
 
 ---
 
-## End Users
-### _"As an end user..."_
+## Must Have
 
+### End Users
 #### Story 1: Create Account and Access Questions
 **I want to** create an account and log in **so that** I can access the interview question bank and prepare for my interviews.
 
@@ -41,24 +39,7 @@
 
 ---
 
-#### Story 3: Practice with AI Feedback
-**I want to** submit my answers and receive instant AI-powered evaluation **so that** I can understand my strengths, improve weaknesses, and build confidence.
-
-**Acceptance Criteria:**
-- User can type/paste answer in multi-line text area
-- "Get AI Feedback" button submits answer to Marcus (AWS Bedrock)
-- Loading state shows "Marcus is evaluating..." while processing
-- Evaluation returns within 10 seconds
-- Feedback displays: score (0-100), correctness indicator, strengths list, improvements list, suggestions list, personal comment
-- User can click "Try Again" to clear and resubmit a new answer
-- Optional reference answer available (expandable, hidden by default)
-
----
-
-
-## Developers
-### _"As a developer..."_
-
+### Developers
 #### Story 1: Secure Backend API
 **I want to** implement secure authentication and authorization with AWS Cognito **so that** only authorized users can access protected resources and data.
 
@@ -73,21 +54,7 @@
 
 ---
 
-#### Story 2: AI-Powered Answer Evaluation
-**I want to** integrate AWS Bedrock for answer evaluation **so that** candidates receive instant, intelligent feedback on their interview answers.
-
-**Acceptance Criteria:**
-- Lambda function invokes Bedrock Claude 3.7 Sonnet model
-- Evaluation prompt tailored to competency type (LP, System Design, Technical)
-- AI response parsed and validated as JSON
-- Response includes: score, correctness, strengths, improvements, suggestions, comment
-- Evaluation completes in <10 seconds
-- Graceful error handling if AI service unavailable
-- Evaluation metrics logged (latency, errors)
-
----
-
-#### Story 3: Scalable Data Layer
+#### Story 2: Scalable Data Layer
 **I want to** use DynamoDB for question storage **so that** the system scales efficiently and handles large question sets reliably.
 
 **Acceptance Criteria:**
@@ -101,7 +68,7 @@
 
 ---
 
-#### Story 4: Infrastructure as Code
+#### Story 3: Infrastructure as Code
 **I want to** define infrastructure using AWS CDK **so that** environments are reproducible, version-controlled, and deployable via CI/CD.
 
 **Acceptance Criteria:**
@@ -115,9 +82,7 @@
 
 ---
 
-## Admin Users
-### _"As an admin..."_
-
+### Admin Users
 #### Story 1: Manage Question Bank
 **I want to** manage interview questions with proper authorization **so that** the question bank remains high-quality and only authorized users can make changes.
 
@@ -144,19 +109,7 @@
 
 ---
 
-#### Story 2: Delegate Admin Responsibilities
-**I want to** assign users to admin groups **so that** question management responsibilities can be shared across the team.
-
-**Acceptance Criteria:**
-- Script exists to add users to Cognito Admin group (`admin_create_user.py`)
-- Group membership reflected in JWT claims
-- Admin permissions take effect immediately after group assignment
-
----
-
-## Platform Administrators
-### _"As a platform administrator..."_
-
+### Platform Administrators
 #### Story 1: Multi-Environment Infrastructure
 **I want to** manage separate Alpha and Production environments **so that** changes can be tested safely before reaching end users.
 
@@ -185,6 +138,50 @@
 
 ---
 
+## Nice to Have
+
+### End Users
+#### Story 3: Practice with AI Feedback
+**I want to** submit my answers and receive instant AI-powered evaluation **so that** I can understand my strengths, improve weaknesses, and build confidence.
+
+**Acceptance Criteria:**
+- User can type/paste answer in multi-line text area
+- "Get AI Feedback" button submits answer to Marcus (AWS Bedrock)
+- Loading state shows "Marcus is evaluating..." while processing
+- Evaluation returns within 10 seconds
+- Feedback displays: score (0-100), correctness indicator, strengths list, improvements list, suggestions list, personal comment
+- User can click "Try Again" to clear and resubmit a new answer
+- Optional reference answer available (expandable, hidden by default)
+
+---
+
+### Developers
+#### Story 2: AI-Powered Answer Evaluation
+**I want to** integrate AWS Bedrock for answer evaluation **so that** candidates receive instant, intelligent feedback on their interview answers.
+
+**Acceptance Criteria:**
+- Lambda function invokes Bedrock Claude 3.7 Sonnet model
+- Evaluation prompt tailored to competency type (LP, System Design, Technical)
+- AI response parsed and validated as JSON
+- Response includes: score, correctness, strengths, improvements, suggestions, comment
+- Evaluation completes in <10 seconds
+- Graceful error handling if AI service unavailable
+- Evaluation metrics logged (latency, errors)
+
+---
+
+### Admin Users
+#### Story 2: Delegate Admin Responsibilities
+**I want to** assign users to admin groups **so that** question management responsibilities can be shared across the team.
+
+**Acceptance Criteria:**
+- Script exists to add users to Cognito Admin group (`admin_create_user.py`)
+- Group membership reflected in JWT claims
+- Admin permissions take effect immediately after group assignment
+
+---
+
+### Platform Administrators
 #### Story 3: Monitoring and Observability
 **I want to** monitor system health with alarms and centralized logging **so that** I can detect and resolve issues quickly.
 
@@ -227,4 +224,3 @@
 **Document Version:** 2.2
 **Last Updated:** February 22, 2026
 **Updated By:** Antho103
-
