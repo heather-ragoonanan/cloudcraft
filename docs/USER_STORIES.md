@@ -109,6 +109,16 @@
 
 ---
 
+#### Story 2: Delegate Admin Responsibilities
+**I want to** assign users to admin groups **so that** question management responsibilities can be shared across the team.
+
+**Acceptance Criteria:**
+- Script exists to add users to Cognito Admin group (`admin_create_user.py`)
+- Group membership reflected in JWT claims
+- Admin permissions take effect immediately after group assignment
+
+---
+
 ### Platform Administrators
 #### Story 1: Multi-Environment Infrastructure
 **I want to** manage separate Alpha and Production environments **so that** changes can be tested safely before reaching end users.
@@ -135,6 +145,37 @@
 - Security scans fail build if high/critical vulnerabilities found
 - Manual approval required before production deployment
 - Deployment failures roll back automatically (or prevent promotion)
+
+---
+
+#### Story 3: Monitoring and Observability
+**I want to** monitor system health with alarms and centralized logging **so that** I can detect and resolve issues quickly.
+
+**Acceptance Criteria:**
+- CloudWatch Logs capture all Lambda function output
+- Structured JSON logging with request IDs
+- CloudWatch alarms configured for:
+  - Lambda errors (> threshold)
+  - Lambda throttles
+  - Lambda duration (high latency)
+  - API Gateway 5xx errors
+- Alarms send notifications via SNS (email)
+- CloudTrail enabled for AWS API audit trail
+- Logs retained for minimum 30 days
+
+---
+
+#### Story 4: Security and Cost Management
+**I want to** enforce security best practices and optimize costs **so that** the application is secure and cost-efficient.
+
+**Acceptance Criteria:**
+- IAM roles follow least-privilege principle
+- HTTPS enforced on CloudFront (HTTP redirects)
+- DynamoDB encryption at rest enabled
+- S3 bucket encryption enabled
+- Serverless architecture (Lambda, DynamoDB on-demand) scales with usage
+- CloudFront caching reduces origin requests
+- Cost Explorer available for manual cost review
 
 ---
 
@@ -167,49 +208,6 @@
 - Evaluation completes in <10 seconds
 - Graceful error handling if AI service unavailable
 - Evaluation metrics logged (latency, errors)
-
----
-
-### Admin Users
-#### Story 2: Delegate Admin Responsibilities
-**I want to** assign users to admin groups **so that** question management responsibilities can be shared across the team.
-
-**Acceptance Criteria:**
-- Script exists to add users to Cognito Admin group (`admin_create_user.py`)
-- Group membership reflected in JWT claims
-- Admin permissions take effect immediately after group assignment
-
----
-
-### Platform Administrators
-#### Story 3: Monitoring and Observability
-**I want to** monitor system health with alarms and centralized logging **so that** I can detect and resolve issues quickly.
-
-**Acceptance Criteria:**
-- CloudWatch Logs capture all Lambda function output
-- Structured JSON logging with request IDs
-- CloudWatch alarms configured for:
-  - Lambda errors (> threshold)
-  - Lambda throttles
-  - Lambda duration (high latency)
-  - API Gateway 5xx errors
-- Alarms send notifications via SNS (email)
-- CloudTrail enabled for AWS API audit trail
-- Logs retained for minimum 30 days
-
----
-
-#### Story 4: Security and Cost Management
-**I want to** enforce security best practices and optimize costs **so that** the application is secure and cost-efficient.
-
-**Acceptance Criteria:**
-- IAM roles follow least-privilege principle
-- HTTPS enforced on CloudFront (HTTP redirects)
-- DynamoDB encryption at rest enabled
-- S3 bucket encryption enabled
-- Serverless architecture (Lambda, DynamoDB on-demand) scales with usage
-- CloudFront caching reduces origin requests
-- Cost Explorer available for manual cost review
 
 ---
 
