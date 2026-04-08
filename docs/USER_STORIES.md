@@ -242,6 +242,21 @@
 
 ---
 
+#### Story 6: Custom Application Metrics
+**I want to** emit business-specific metrics to CloudWatch **so that** I can monitor application behaviour beyond standard AWS metrics and gain insight into how users interact with the system.
+
+**Acceptance Criteria:**
+- Custom metrics emitted to a dedicated `CloudCraft` CloudWatch namespace
+- Question retrieval, views, searches, and 404s tracked
+- AI evaluation scores, correctness rates, and competency breakdowns tracked
+- Marcus AI response latency tracked
+- User engagement levels (High/Medium/Low) derived from evaluation scores
+- Lambda cold starts and memory usage tracked
+- Metric failures do not impact Lambda execution
+- Lambda IAM roles scoped to only emit metrics to the `CloudCraft` namespace
+
+---
+
 ## Nice to Have
 
 ### End Users
