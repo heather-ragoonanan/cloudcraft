@@ -39,13 +39,8 @@ function NavBar() {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-brand">
-<<<<<<< HEAD
-          {/* Interview Question Bank */}
-          CloudCraft
-=======
           Interview Question Bank
           {/* CloudCraft*/}
->>>>>>> 3b85d77 (Test revert)
         </Link>
         <div className="navbar-links">
           <Link to="/questions" className="nav-link">
