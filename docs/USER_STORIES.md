@@ -5,7 +5,8 @@
 
 ## Table of Contents
 1. [Must Have](#must-have)
-2. [Nice to Have](#nice-to-have)
+2. [Should Have](#should-have)
+3. [Nice to Have](#nice-to-have)
 
 ---
 
@@ -176,6 +177,68 @@
 - Serverless architecture (Lambda, DynamoDB on-demand) scales with usage
 - CloudFront caching reduces origin requests
 - Cost Explorer available for manual cost review
+
+---
+
+## Should Have
+
+### End Users
+#### Story 3: Track Progress
+**I want to** see which questions I have already answered **so that** I can track my preparation progress and avoid repeating questions unnecessarily.
+
+**Acceptance Criteria:**
+- Answered questions are visually marked (e.g. checkmark or badge on card)
+- Progress summary shows "X of Y questions attempted"
+- Progress persists across sessions
+- User can reset their progress
+
+---
+
+#### Story 4: Bookmark Questions
+**I want to** save questions to a personal list **so that** I can revisit important or difficult questions later.
+
+**Acceptance Criteria:**
+- Bookmark icon on each question card
+- Bookmarked questions accessible from a dedicated view
+- Bookmarks persist across sessions
+- User can remove bookmarks
+
+---
+
+### Developers
+#### Story 4: Frontend Error Handling
+**I want to** handle API errors gracefully in the frontend **so that** users receive clear feedback when something goes wrong rather than a broken UI.
+
+**Acceptance Criteria:**
+- Network/API errors display a user-friendly error message
+- Loading states shown while data is being fetched
+- Empty states shown when no questions match filters
+- Errors logged to CloudWatch via structured logging
+
+---
+
+### Admin Users
+#### Story 3: Bulk Question Import
+**I want to** import multiple questions at once from a CSV or JSON file **so that** I can populate the question bank efficiently without entering questions one by one.
+
+**Acceptance Criteria:**
+- Admin can upload a CSV or JSON file from the Admin Dashboard
+- File is validated before import (required fields, allowed difficulty values)
+- Validation errors reported per row/entry before committing
+- Successfully imported questions appear immediately in the question bank
+- Import action logged to CloudWatch with user identity and count
+
+---
+
+### Platform Administrators
+#### Story 5: Cost Alerting
+**I want to** receive alerts when AWS costs exceed defined thresholds **so that** unexpected spend is caught early before it becomes significant.
+
+**Acceptance Criteria:**
+- AWS Budgets configured with monthly cost threshold
+- Alert sent via SNS email when 80% and 100% of budget is reached
+- Separate budgets for Alpha and Production environments
+- Budget configuration defined in CDK
 
 ---
 
