@@ -40,7 +40,7 @@ function NavBar() {
       <div className="navbar-container">
         <Link to="/" className="navbar-brand">
           Interview Question Bank
-          {/* CloudCraft */}
+          {/* CloudCraft*/}
         </Link>
         <div className="navbar-links">
           <Link to="/questions" className="nav-link">
